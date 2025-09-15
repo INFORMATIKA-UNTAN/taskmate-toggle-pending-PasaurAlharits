@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-export default function TaskItem({ task, onToggle }) {
+export default function TaskItem({ task, onToggle, onDelete }) {
     const isDone = task.status === 'done';
+
     return (
         <TouchableOpacity onPress={() => onToggle?.(task)}
             activeOpacity={0.7}>
@@ -25,8 +26,9 @@ export default function TaskItem({ task, onToggle }) {
                 </View>
                 <View style={[styles.badge, isDone ? styles.badgeDone :
                     styles.badgePending]}>
-                    <Text style={styles.badgeText}>{isDone ? 'Done' :
-                        'Todo'}</Text>
+                    <Text style={styles.badgeText}>
+                        {task.status}
+                    </Text>
                 </View>
             </View>
         </TouchableOpacity>
@@ -42,10 +44,10 @@ const styles = StyleSheet.create({
     title: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
     strike: { textDecorationLine: 'line-through', color: '#64748b' },
     desc: { color: '#475569', marginBottom: 6 },
-    meta: {flexDirection: "row", alignItems: "center", gap: 2},
-    badge: {paddingVertical: 4, paddingHorizontal: 5, borderRadius: 12},
+    meta: { flexDirection: "row", alignItems: "center", gap: 2 },
+    badge: { paddingVertical: 4, paddingHorizontal: 5, borderRadius: 12 },
     badgePending: { backgroundColor: '#fee2e2' },
     badgeDone: { backgroundColor: '#dcfce7' },
     badgeText: { fontWeight: '700', fontSize: 12 },
-    deadline: {fontSize:12}
+    deadline: { fontSize: 12 }
 });

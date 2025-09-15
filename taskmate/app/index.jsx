@@ -1,20 +1,43 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, FlatList, View, Button, TouchableOpacity } from 'react-native';
 import TaskItem from '../src/components/TaskItem';
 import { dummyTasks } from '../src/data/dummyTasks';
+import { loadTasks, saveTasks } from '../src/storage/taskStorage';
+
 export default function HomeScreen() {
-    const [tasks, setTasks] = useState(dummyTasks);
+    const [tasks, setTasks] = useState([]);
     const [filter, setFilter] = useState("All");
     const [showFilter, setshowFilter] = useState(false);
 
-    const handleToggle = (task) => {
-        setTasks(prev =>
-            prev.map(t => t.id === task.id
-                ? { ...t, status: t.status === 'done' ? 'pending' : 'done' }
-                : t
-            )
-        );
+    useEffect(() => {
+        (async () => {
+            const data = await loadTasks();
+            setTasks(data);
+        })();
+    }, []);
+
+    const handleToggle = async (task) => {
+        const updated = tasks.map((t) => {
+            if (t.id === task.id) {
+                if (t.status === 'todo') {
+                    return { ...t, status: 'pending' };
+                } else if (t.status === 'pending') {
+                    return { ...t, status: 'done' };
+                } else {
+                    return { ...t, status: 'todo' };
+                }
+            }
+            return t;
+        });
+        setTasks(updated);
+        await saveTasks(updated);
     };
+
+    const handleDelete = async (task) => {
+        const updated = tasks.filter((t) => t.id !== task.id);
+        setTasks(updated);
+        await saveTasks(updated);
+    }
 
     const filteredTasks = tasks.filter((task) => {
         if (filter === "All") return true;
@@ -47,6 +70,17 @@ export default function HomeScreen() {
                                 styles.filterText,
                                 filter === "pending" && styles.activeText,
                             ]}>
+                            Pending
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.filterButton, filter === "todo" && styles.activeButton]}
+                        onPress={() => setFilter("todo")}>
+                        <Text
+                            style={[
+                                styles.filterText,
+                                filter === "todo" && styles.activeText,
+                            ]}>
                             Todo
                         </Text>
                     </TouchableOpacity>
@@ -64,10 +98,15 @@ export default function HomeScreen() {
                 data={filteredTasks}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={{ padding: 16 }}
-                renderItem={({ item }) => <TaskItem task={item}
-                    onToggle={handleToggle} />}
+                renderItem={({ item }) => <TaskItem
+                    task={item}
+                    onToggle={handleToggle}
+                    onDelete={handleDelete}
+                />}
+                ListEmptyComponent={
+                    <Text style={{ textAlign: 'center' }}>Tidak ada tugas</Text>
+                }
             />
-
         </SafeAreaView>
     );
 }
@@ -76,7 +115,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f8fafc' },
     header: { fontSize: 20, fontWeight: '700', padding: 16 },
     buttonRow: {
-        flexDirection: "column",
+        flexDirection: "row",
         justifyContent: "space-around",
         marginVertical: 10,
     },
@@ -84,7 +123,7 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         paddingHorizontal: 16,
         borderRadius: 8,
-        backgroundColor: "#e0e0e0", 
+        backgroundColor: "#e0e0e0",
     },
     activeButton: {
         backgroundColor: "#007AFF",
